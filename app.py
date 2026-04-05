@@ -1,17 +1,16 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-import tensorflow as tf
 import cv2
 import os
 import gdown
+import onnxruntime as ort
 
 # ============================================================
-# CONFIG — Replace YOUR_GOOGLE_DRIVE_FILE_ID with your actual
-# file ID from Google Drive sharing link
+# CONFIG
 # ============================================================
-GDRIVE_FILE_ID = "1tFm_eMJu6hfThEVQb30pN2CDsRgRWjep"
-MODEL_PATH = "models/best_model.keras"
+GDRIVE_FILE_ID = "YOUR_ONNX_MODEL_GOOGLE_DRIVE_FILE_ID"
+MODEL_PATH = "models/best_model.onnx"
 IMG_SIZE = (224, 224)
 
 st.set_page_config(
@@ -27,8 +26,8 @@ def load_model():
         with st.spinner("Downloading model for first time (~100MB)..."):
             url = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}"
             gdown.download(url, MODEL_PATH, quiet=False)
-    model = tf.keras.models.load_model(MODEL_PATH)
-    return model
+    session = ort.InferenceSession(MODEL_PATH)
+    return session
 
 def preprocess_image(image):
     img = np.array(image.convert("RGB"))
@@ -41,7 +40,6 @@ def main():
     st.title("🕵️ Deepfake & AI-Generated Face Detection")
     st.markdown("Upload a facial image to determine if it is **REAL** or **FAKE**.")
 
-    # Sidebar
     st.sidebar.header("About")
     st.sidebar.info(
         "This system uses a fine-tuned Xception CNN model "
@@ -65,20 +63,19 @@ def main():
         image = Image.open(uploaded_file).convert("RGB")
 
         col1, col2 = st.columns(2)
-
         with col1:
             st.subheader("Uploaded Image")
             st.image(image, use_container_width=True)
 
         with st.spinner("Analyzing image..."):
-            model = load_model()
+            session = load_model()
             img_array = preprocess_image(image)
-            prediction = model.predict(img_array)[0][0]
+            input_name = session.get_inputs()[0].name
+            output = session.run(None, {input_name: img_array})
+            prediction = float(output[0][0][0])
 
-        # class_indices: {'fake': 0, 'real': 1}
-        # sigmoid output close to 1 = real, close to 0 = fake
         is_real = prediction > 0.5
-        confidence = float(prediction) if is_real else float(1 - prediction)
+        confidence = prediction if is_real else 1 - prediction
         label = "REAL" if is_real else "FAKE"
         color = "#00cc66" if is_real else "#ff3333"
 
@@ -103,9 +100,9 @@ def main():
         st.subheader("Prediction Scores")
         col3, col4 = st.columns(2)
         with col3:
-            st.metric("REAL probability", f"{float(prediction)*100:.2f}%")
+            st.metric("REAL probability", f"{prediction*100:.2f}%")
         with col4:
-            st.metric("FAKE probability", f"{float(1-prediction)*100:.2f}%")
+            st.metric("FAKE probability", f"{(1-prediction)*100:.2f}%")
 
         st.progress(float(confidence))
 
