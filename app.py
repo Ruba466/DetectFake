@@ -9,7 +9,7 @@ import onnxruntime as ort
 # ============================================================
 # CONFIG
 # ============================================================
-GDRIVE_FILE_ID = "1M8ZaGKsOeMQnRR2Wvgdn0cUHA2Ejw1Yn"
+GDRIVE_FILE_ID = "1VDtnUzSBCRiw4m_MXdYNIc1Wyjelpo_r"
 MODEL_PATH = "models/best_model.onnx"
 IMG_SIZE = (224, 224)
 
