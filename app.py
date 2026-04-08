@@ -7,9 +7,9 @@ import gdown
 import onnxruntime as ort
 
 # ============================================================
-# CONFIG
+# CONFIG — Update GDRIVE_FILE_ID with your new model's file ID
 # ============================================================
-GDRIVE_FILE_ID = "1VDtnUzSBCRiw4m_MXdYNIc1Wyjelpo_r"
+GDRIVE_FILE_ID = "1VDtnUzSBCRiw4m_MXdYNIc1Wyjelpo_r"  # update with new model ID
 MODEL_PATH = "models/best_model.onnx"
 IMG_SIZE = (224, 224)
 
@@ -42,17 +42,20 @@ def main():
 
     st.sidebar.header("About")
     st.sidebar.info(
-        "This system uses a fine-tuned Xception CNN model "
-        "trained on 100,000 facial images to detect deepfakes "
-        "and AI-generated faces."
+        "This system uses a fine-tuned Xception CNN model trained on "
+        "~170,000 diverse facial images to detect deepfakes and "
+        "AI-generated faces from multiple generation techniques."
     )
     st.sidebar.markdown("---")
     st.sidebar.markdown("**Model:** Xception (Transfer Learning)")
-    st.sidebar.markdown("**Test Accuracy:** 99%")
-    st.sidebar.markdown("**AUC Score:** 0.9992")
-    st.sidebar.markdown("**F1-Score:** 0.99")
-    st.sidebar.markdown("**Dataset:** 140k Real and Fake Faces")
-    st.sidebar.markdown("**Training Images:** 100,000")
+    st.sidebar.markdown("**Architecture:** Xception CNN + ONNX Runtime")
+    st.sidebar.markdown("**Validation Accuracy:** 88.54%")
+    st.sidebar.markdown("**AUC Score:** 0.9641")
+    st.sidebar.markdown("**F1-Score:** 0.88")
+    st.sidebar.markdown("**Fake Recall:** 97%")
+    st.sidebar.markdown("**Datasets:** 140k Faces + Real vs AI Generated")
+    st.sidebar.markdown("**Training Images:** ~170,000")
+    st.sidebar.markdown("**Detects:** StyleGAN2 · Stable Diffusion · FaceSwap · SFHQ")
     st.sidebar.markdown("**Platform:** Kaggle (Tesla T4 x2)")
 
     uploaded_file = st.file_uploader(
@@ -74,6 +77,7 @@ def main():
             output = session.run(None, {input_name: img_array})
             prediction = float(output[0][0][0])
 
+        # sigmoid: close to 1 = real, close to 0 = fake
         is_real = prediction > 0.5
         confidence = prediction if is_real else 1 - prediction
         label = "REAL" if is_real else "FAKE"
@@ -105,6 +109,12 @@ def main():
             st.metric("FAKE probability", f"{(1-prediction)*100:.2f}%")
 
         st.progress(float(confidence))
+
+        st.markdown("---")
+        st.caption(
+            "Note: This model is trained on StyleGAN2, Stable Diffusion, FaceSwap, and SFHQ images. "
+            "Performance may vary on generation methods not seen during training."
+        )
 
 if __name__ == "__main__":
     main()
