@@ -52,6 +52,4 @@ DetectFake/
 - Streamlit, OpenCV, NumPy, PIL
 - Trained on Kaggle (Tesla T4 GPU)
 
-## 📚 Honours Project
 
-Built as part of a Bachelor of Engineering (Honours) in Computer Science, 2025-2026.
